@@ -8,7 +8,7 @@ from aiogram.utils.markdown import hbold, hlink
 
 
 
-TOKEN = '5320242884:AAFvo5kvfeHoHZZNa6xbvhvuHMGZmjbkdF8'
+TOKEN = 'TOKEN'
 
 
 
@@ -23,6 +23,7 @@ memory = int
 
 
 class User_answers(StatesGroup):
+    """Class with the states necessary for conducting the dialogues with the bot"""
     iphone_model = State()
     mac_model = State()
     watch_model = State()
@@ -35,11 +36,12 @@ class User_answers(StatesGroup):
 
 
 def get_card(product: dict) -> str:
+    # getting text of message of product
     return f'{hlink(product.get("text"), product.get("link"))}\n'\
            f'{hbold("Price: ")} {product.get("price")} rub'
 
 
-@ds.message_handler(commands=['search'])
+@ds.message_handler(commands=['start', 'search'])
 async def start(message: types.Message) -> None:
     start_buttons = ['IPhone', 'MacBook', 'AirPods', 'Apple Watch']
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -49,7 +51,8 @@ async def start(message: types.Message) -> None:
 
 
 @ds.message_handler(Text(equals='IPhone'))
-async def input_iph_model(message: types.Message) -> None:
+async def choose_iph_model(message: types.Message) -> None:
+    # Click the button with the iphone model
     global search
     search = IPhone()
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -59,7 +62,9 @@ async def input_iph_model(message: types.Message) -> None:
 
 
 @ds.message_handler(state=User_answers.iphone_model)
-async def input_mp_iph(message: types.Message, state: FSMContext) -> None:
+async def input_mp_iph(message: types.Message,
+                       state: FSMContext) -> None:
+    # input the maximum price of the iphone
     global model
     async with state.proxy() as proxy:
         proxy['text'] = message.text
@@ -69,7 +74,9 @@ async def input_mp_iph(message: types.Message, state: FSMContext) -> None:
 
 
 @ds.message_handler(state=User_answers.max_price_iphone)
-async def choose_iph_memory(message: types.Message, state: FSMContext) -> None:
+async def choose_iph_memory(message: types.Message,
+                            state: FSMContext) -> None:
+    # Click the button with the memory
     global max_price
     async with state.proxy() as proxy:
         proxy['text'] = message.text
@@ -86,7 +93,8 @@ async def choose_iph_memory(message: types.Message, state: FSMContext) -> None:
 
 
 @ds.message_handler(state=User_answers.iphone_memory)
-async def get_iphones(message: types.Message, state: FSMContext) -> None:
+async def get_iphones(message: types.Message,
+                      state: FSMContext) -> None:
     global model, max_price, memory
     async with state.proxy() as proxy:
         proxy['text'] = message.text
@@ -114,8 +122,10 @@ async def get_iphones(message: types.Message, state: FSMContext) -> None:
         await state.finish()
 
 
+
 @ds.message_handler(Text(equals='MacBook'))
 async def input_mb_model(message: types.Message) -> None:
+    # Click the button with the macbook model
     search = MacBook()
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add(*search.models)
@@ -124,7 +134,9 @@ async def input_mb_model(message: types.Message) -> None:
 
 
 @ds.message_handler(state=User_answers.mac_model)
-async def input_mp_mb(message: types.Message, state: FSMContext) -> None:
+async def input_mp_mb(message: types.Message,
+                      state: FSMContext) -> None:
+    # input the maximum price of the macbook
     global model
     async with state.proxy() as proxy:
         proxy['text'] = message.text
@@ -134,7 +146,9 @@ async def input_mp_mb(message: types.Message, state: FSMContext) -> None:
 
 
 @ds.message_handler(state=User_answers.max_price_mac)
-async def choose_mb_memory(message: types.Message, state: FSMContext) -> None:
+async def choose_mb_memory(message: types.Message,
+                           state: FSMContext) -> None:
+    # Click the button with the memory
     global max_price
     async with state.proxy() as proxy:
         proxy['text'] = message.text
@@ -151,7 +165,8 @@ async def choose_mb_memory(message: types.Message, state: FSMContext) -> None:
 
 
 @ds.message_handler(state=User_answers.mac_memory)
-async def get_macbooks(message: types.Message, state: FSMContext) -> None:
+async def get_macbooks(message: types.Message,
+                       state: FSMContext) -> None:
     global model, max_price
     async with state.proxy() as proxy:
         proxy['text'] = message.text
@@ -179,6 +194,7 @@ async def get_macbooks(message: types.Message, state: FSMContext) -> None:
         await state.finish()
 
 
+
 @ds.message_handler(Text(equals='AirPods'))
 async def get_airpods(message: types.Message) -> None:
     await message.answer('Please, waiting...')
@@ -193,7 +209,8 @@ async def get_airpods(message: types.Message) -> None:
 
 
 @ds.message_handler(Text(equals='Apple Watch'))
-async def input_aw_model(message: types.Message) -> None:
+async def choose_aw_model(message: types.Message) -> None:
+    # Click the button with the apple watch model
     search = Apple_Watch()
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add(*search.models)
@@ -202,7 +219,9 @@ async def input_aw_model(message: types.Message) -> None:
 
 
 @ds.message_handler(state=User_answers.watch_model)
-async def input_mp_aw(message: types.Message, state: FSMContext) -> None:
+async def input_mp_aw(message: types.Message,
+                      state: FSMContext) -> None:
+    # input the maximum price of the iphone
     global model
     async with state.proxy() as proxy:
         proxy['text'] = message.text
@@ -212,7 +231,9 @@ async def input_mp_aw(message: types.Message, state: FSMContext) -> None:
 
 
 @ds.message_handler(state=User_answers.max_price_watch)
-async def input_diag(message: types.Message, state: FSMContext) -> None:
+async def input_diag(message: types.Message,
+                     state: FSMContext) -> None:
+    # Input the diagonal of watches
     global max_price
     async with state.proxy() as proxy:
         proxy['text'] = message.text
@@ -226,7 +247,8 @@ async def input_diag(message: types.Message, state: FSMContext) -> None:
 
 
 @ds.message_handler(state=User_answers.diagonal)
-async def get_watches(message: types.Message, state: FSMContext) -> None:
+async def get_watches(message: types.Message,
+                      state: FSMContext) -> None:
     global model, max_price, diagonal
     async with state.proxy() as proxy:
         proxy['text'] = message.text
