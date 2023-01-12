@@ -41,46 +41,6 @@ class Search:
         return models
 
 
-    # def choose_model(self, models: dict) -> str:
-    #     print('Please, choose model')
-
-    #     count = 0
-    #     for model in models:
-    #         count += 1
-    #         print(f'{count}) {model}')
-
-    #     while True:
-    #         choice = input('Your choice: ')
-    #         if choice not in models:
-    #             print('There is no such option')
-    #         else:
-    #             break
-
-    #     return models.get(choice)
-
-
-    # def input_max_price(self) -> int:
-    #     while True:
-    #         try:
-    #             max_price = int(input('Enter the maximum allowable price (in rubles): '))
-    #         except ValueError:
-    #             print('Incorrected input!')
-    #         else:
-    #             break
-    #     return max_price
-
-
-    # def input_device_memory(self) -> int:
-    #     variants_of_memory = [2 ** i for i in range(1, 16)]
-    #     while True:
-    #         memory = int(input('Enter the device memory (in gigabytes): '))
-    #         if memory not in variants_of_memory:
-    #             print('Incorrect input!')
-    #         else:
-    #             break
-
-    #     return memory
-
 
     def get_price(self, product) -> int:
         return int(product.find('span', class_='current-price').next_element.replace(' ', ''))
