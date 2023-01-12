@@ -1,10 +1,7 @@
+import telebot
+
 from parsing_tools import IPhone, MacBook, AirPods, Apple_Watch
-from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher.filters import Text
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher import FSMContext
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.utils.markdown import hbold, hlink
+from telebot.types import Message, ReplyKeyboardMarkup
 
 
 
@@ -12,8 +9,8 @@ TOKEN = '5320242884:AAFvo5kvfeHoHZZNa6xbvhvuHMGZmjbkdF8'
 
 
 
-bot = Bot(token=TOKEN, parse_mode=types.ParseMode.HTML)
-ds = Dispatcher(bot=bot, storage=MemoryStorage())
+bot = telebot.TeleBot(TOKEN)
+
 
 model = str
 max_price = int
@@ -22,80 +19,68 @@ memory = int
 
 
 
-class User_answers(StatesGroup):
-    iphone_model = State()
-    mac_model = State()
-    watch_model = State()
-    max_price_iphone = State()
-    max_price_mac = State()
-    max_price_watch = State()
-    iphone_memory = State()
-    mac_memory = State()
-    diagonal = State()
-
-
 def get_card(product: dict) -> str:
-    return f'{hlink(product.get("text"), product.get("link"))}\n'\
-           f'{hbold("Price: ")} {product.get("price")} rub'
+    return f'{product.get("text")}\n{product.get("link")}\n'\
+           f'Price: {product.get("price")} rub'
 
 
-@ds.message_handler(commands=['search'])
-async def start(message: types.Message) -> None:
+@bot.message_handler(commands=['start', 'search'])
+def start(message: Message) -> None:
     start_buttons = ['IPhone', 'MacBook', 'AirPods', 'Apple Watch']
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(*start_buttons)
-    await message.answer('What do you want?', reply_markup=keyboard)
+    kd = ReplyKeyboardMarkup(resize_keyboard=True)
+    kd.add(*start_buttons)
+    bot.send_message(
+        message.chat.id, 'What do you want?', reply_markup=kd
+    )
 
 
 
-@ds.message_handler(Text(equals='IPhone'))
-async def input_iph_model(message: types.Message) -> None:
+@bot.message_handler(func=lambda message: message.text == 'IPhone')
+def choose_iph_model(message: Message) -> None:
     global search
     search = IPhone()
-    kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add(*search.models)
-    await User_answers.iphone_model.set()
-    await message.answer(f'Please, choose model', reply_markup=kb)
+    bot.send_message(
+        message.chat.id, 'Please, choose model', reply_markup=kb
+    )
+    bot.register_next_step_handler(message, input_mp_iph)
 
 
-@ds.message_handler(state=User_answers.iphone_model)
-async def input_mp_iph(message: types.Message, state: FSMContext) -> None:
+def input_mp_iph(message: Message) -> None:
     global model
-    async with state.proxy() as proxy:
-        proxy['text'] = message.text
-        model = proxy['text']
-    await User_answers.max_price_iphone.set()
-    await message.answer('Enter the maximum allowable price (in rubles)')
+    model = message.text
+    bot.send_message(
+        message.chat.id, 'Enter the maximum allowable price (in rubles)'
+    )
+    bot.register_next_step_handler(message, choose_iph_memory)
 
 
-@ds.message_handler(state=User_answers.max_price_iphone)
-async def choose_iph_memory(message: types.Message, state: FSMContext) -> None:
+def choose_iph_memory(message: Message) -> None:
     global max_price
-    async with state.proxy() as proxy:
-        proxy['text'] = message.text
     try:
-        max_price = int(proxy['text'])
+        max_price = int(message.text)
     except ValueError:
-        await message.answer('Incorrected input!')
+        bot.reply_to(message, 'Incorrected input!')
     else:
         memory_buttons = [str(2 ** i) + ' Gb' for i in range(1, 12)]
-        kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        kb = ReplyKeyboardMarkup(resize_keyboard=True)
         kb.add(*memory_buttons)
-        await User_answers.iphone_memory.set()
-        await message.answer('Choose the device memory', reply_markup=kb)
+        bot.send_message(
+            message.chat.id, 'Choose the device memory', reply_markup=kb
+        )
+        bot.register_next_step_handler(message, get_iphones)
 
 
-@ds.message_handler(state=User_answers.iphone_memory)
-async def get_iphones(message: types.Message, state: FSMContext) -> None:
+def get_iphones(message: Message) -> None:
     global model, max_price, memory
-    async with state.proxy() as proxy:
-        proxy['text'] = message.text
     try:
-        memory = int(proxy['text'].replace(' Gb', ''))
+        memory = int(message.text.replace(' Gb', ''))
     except ValueError:
-        await message.answer('Incorrected input!')
+        bot.reply_to(message, 'Incorrected input!')
     else:
-        await message.answer('Please, waiting...')
+        bot.send_message(message.chat.id, 'Please, waiting...')
+
         search = IPhone()
         iphones = search.get_products(
             url=str(search.models.get(model)),
@@ -105,62 +90,55 @@ async def get_iphones(message: types.Message, state: FSMContext) -> None:
 
         for i in iphones:
             card = get_card(i)
-            await message.answer(card)
-
-        model = ''
-        max_price = 0
-        memory = 0
-
-        await state.finish()
+            bot.send_message(message.chat.id, card)
+    finally:
+        model, max_price, memory = '', 0, 0
 
 
-@ds.message_handler(Text(equals='MacBook'))
-async def input_mb_model(message: types.Message) -> None:
+
+@bot.message_handler(func=lambda message: message.text == 'MacBook')
+def choose_mb_model(message: Message) -> None:
     search = MacBook()
-    kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add(*search.models)
-    await User_answers.mac_model.set()
-    await message.answer(f'Please, choose model', reply_markup=kb)
+    bot.send_message(
+        message.chat.id, 'Please, choose model', reply_markup=kb
+    )
+    bot.register_next_step_handler(message, input_mp_mcbk)
 
-
-@ds.message_handler(state=User_answers.mac_model)
-async def input_mp_mb(message: types.Message, state: FSMContext) -> None:
+def input_mp_mcbk(message: Message) -> None:
     global model
-    async with state.proxy() as proxy:
-        proxy['text'] = message.text
-        model = proxy['text']
-    await User_answers.max_price_mac.set()
-    await message.answer('Enter the maximum allowable price (in rubles)')
+    model = message.text
+    bot.send_message(
+        message.chat.id, 'Enter the maximum allowable price (in rubles)'
+    )
+    bot.register_next_step_handler(message, choose_mb_memory)
 
 
-@ds.message_handler(state=User_answers.max_price_mac)
-async def choose_mb_memory(message: types.Message, state: FSMContext) -> None:
+def choose_mb_memory(message: Message) -> None:
     global max_price
-    async with state.proxy() as proxy:
-        proxy['text'] = message.text
-        try:
-            max_price = int(proxy['text'])
-        except ValueError:
-            await message.answer('Incorrected input!')
-        else:
-            memory_buttons = [str(2 ** i) + ' Gb' for i in range(1, 12)]
-            kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
-            kb.add(*memory_buttons)
-            await User_answers.mac_memory.set()
-            await message.answer('Choose the device memory', reply_markup=kb)
-
-
-@ds.message_handler(state=User_answers.mac_memory)
-async def get_macbooks(message: types.Message, state: FSMContext) -> None:
-    global model, max_price
-    async with state.proxy() as proxy:
-        proxy['text'] = message.text
     try:
-        memory = int(proxy['text'].replace(' Gb', ''))
+        max_price = int(message.text)
     except ValueError:
-        await message.answer('Incorrected input!')
+        bot.reply_to(message, 'Incorrected input!')
     else:
-        await message.answer('Please, waiting...')
+        memory_buttons = [str(2 ** i) + ' Gb' for i in range(1, 12)]
+        kb = ReplyKeyboardMarkup(resize_keyboard=True)
+        kb.add(*memory_buttons)
+        bot.send_message(
+            message.chat.id, 'Choose the device memory', reply_markup=kb
+        )
+        bot.register_next_step_handler(message, get_macbooks)
+
+
+def get_macbooks(message: Message) -> None:
+    global model, max_price, memory
+    try:
+        memory = int(message.text.replace(' Gb', ''))
+    except ValueError:
+        bot.reply_to(message, 'Incorrected input!')
+    else:
+        bot.send_message(message.chat.id, 'Please, waiting...')
         search = MacBook()
         macbooks = search.get_products(
             url=str(search.models.get(model)),
@@ -170,72 +148,64 @@ async def get_macbooks(message: types.Message, state: FSMContext) -> None:
 
         for i in macbooks:
             card = get_card(i)
-            await message.answer(card)
-
-        model = ''
-        max_price = 0
-        memory = 0
-
-        await state.finish()
+            bot.send_message(message.chat.id, card)
+    finally:
+        model, max_price, memory = '', 0, 0
 
 
-@ds.message_handler(Text(equals='AirPods'))
-async def get_airpods(message: types.Message) -> None:
-    await message.answer('Please, waiting...')
+@bot.message_handler(func=lambda message: message.text == 'AirPods')
+def get_airpods(message: Message) -> None:
+    bot.send_message(message.chat.id, 'Please, waiting...')
 
     search = AirPods()
     pods = search.get_products()
 
     for i in pods:
         card = get_card(i)
-        await message.answer(card)
+        bot.send_message(message.chat.id, card)
 
 
 
-@ds.message_handler(Text(equals='Apple Watch'))
-async def input_aw_model(message: types.Message) -> None:
+@bot.message_handler(func=lambda message: message.text == 'Apple Watch')
+def choose_aw_model(message: Message) -> None:
     search = Apple_Watch()
-    kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add(*search.models)
-    await User_answers.watch_model.set()
-    await message.answer(f'Please, choose model', reply_markup=kb)
+    bot.send_message(
+        message.chat.id, 'Please, choose model', reply_markup=kb
+    )
+    bot.register_next_step_handler(message, input_mp_aw)
 
 
-@ds.message_handler(state=User_answers.watch_model)
-async def input_mp_aw(message: types.Message, state: FSMContext) -> None:
+def input_mp_aw(message: Message) -> None:
     global model
-    async with state.proxy() as proxy:
-        proxy['text'] = message.text
-        model = proxy['text']
-    await User_answers.max_price_watch.set()
-    await message.answer('Enter the maximum allowable price (in rubles)')
+    model = message.text
+    bot.send_message(
+        message.chat.id, 'Enter the maximum allowable price (in rubles)'
+    )
+    bot.register_next_step_handler(message, input_diag)
 
 
-@ds.message_handler(state=User_answers.max_price_watch)
-async def input_diag(message: types.Message, state: FSMContext) -> None:
+def input_diag(message: Message) -> None:
     global max_price
-    async with state.proxy() as proxy:
-        proxy['text'] = message.text
     try:
-        max_price = int(proxy['text'])
+        max_price = int(message.text)
     except ValueError:
-        await message.answer('Incorrected input!')
+        bot.reply_to(message, 'Incorrected input!')
     else:
-        await User_answers.diagonal.set()
-        await message.answer('Enter the screen diagonal (in millimeters)')
+        bot.send_message(
+            message.chat.id, 'Enter the screen diagonal (in millimeters)'
+        )
+        bot.register_next_step_handler(message, get_watches)
 
-
-@ds.message_handler(state=User_answers.diagonal)
-async def get_watches(message: types.Message, state: FSMContext) -> None:
+def get_watches(message: Message) -> None:
     global model, max_price, diagonal
-    async with state.proxy() as proxy:
-        proxy['text'] = message.text
     try:
-        diagonal = int(proxy['text'])
+        diagonal = int(message.text)
     except ValueError:
-        await message.answer('Incorrected input!')
+        bot.reply_to(message, 'Incorrected input!')
     else:
-        await message.answer('Please, waiting...')
+        bot.send_message(message.chat.id, 'Please, waiting...')
         search = Apple_Watch()
         watches = search.get_products(
             url=str(search.models.get(model)),
@@ -245,15 +215,10 @@ async def get_watches(message: types.Message, state: FSMContext) -> None:
 
         for i in watches:
             card = get_card(i)
-            await message.answer(card)
-
-        model = ''
-        max_price = 0
-        diagonal = 0
-
-        await state.finish()
+            bot.send_message(message.chat.id, card)
+    finally:
+        model, max_price, diagonal = '', 0, 0
 
 
 
-if __name__ == '__main__':
-    executor.start_polling(dispatcher=ds, skip_updates=True)
+bot.infinity_polling()
