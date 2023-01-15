@@ -1,3 +1,5 @@
+import os
+
 from parsing_tools import IPhone, MacBook, AirPods, Apple_Watch
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters import Text
@@ -5,12 +7,12 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils.markdown import hbold, hlink
+from dotenv import load_dotenv, find_dotenv
 
 
 
-TOKEN = 'TOKEN'
-
-
+load_dotenv(find_dotenv())
+TOKEN = os.getenv("TOKEN")
 
 bot = Bot(token=TOKEN, parse_mode=types.ParseMode.HTML)
 ds = Dispatcher(bot=bot, storage=MemoryStorage())
