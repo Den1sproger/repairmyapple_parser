@@ -1,13 +1,14 @@
+import os
+
 import telebot
 
 from parsing_tools import IPhone, MacBook, AirPods, Apple_Watch
 from telebot.types import Message, ReplyKeyboardMarkup
+from dotenv import load_dotenv, find_dotenv
 
 
-
-TOKEN = 'TOKEN'
-
-bot = telebot.TeleBot(TOKEN)
+load_dotenv(find_dotenv())
+bot = telebot.TeleBot(os.getenv('TOKEN'))
 
 
 
