@@ -13,7 +13,7 @@ bot = telebot.TeleBot(os.getenv('TOKEN'))
 
 
 class Getting_Device:
-    """"""
+    """Class countaining functions of selecting device parameters"""
 
     def __init__(self, device: object,
                  apple_watch: bool = False) -> None:
@@ -28,7 +28,7 @@ class Getting_Device:
 
 
     @staticmethod
-    def get_card(product: dict) -> str:
+    def get_card(product: dict) -> str:   # text of message with product
         return f'{product.get("text")}\n{product.get("link")}\n'\
             f'Price: {product.get("price")} rub'
 
