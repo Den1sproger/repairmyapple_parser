@@ -3,6 +3,7 @@ import lxml
 
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
+from typing import List, Dict
 
 
 ua = UserAgent(browsers=['chrome'])
@@ -18,7 +19,7 @@ class Search:
 
     def create_soup(self, url: str,
                     cls_categories: str,
-                    cls_link: str) -> list[str]:
+                    cls_link: str) -> List[str]:
         response = requests.get(url=url, headers=headers)
         soup = BeautifulSoup(response.text, 'lxml')
         products = soup.find('div', class_=cls_categories).find_all('a', class_=cls_link)
@@ -69,7 +70,7 @@ class IPhone(Search):
 
     def get_products(self, url: str,
                     max_price: int,
-                    desired_memory: int) -> list[dict]:
+                    desired_memory: int) -> List[Dict]:
         cards = self.create_soup(   # collecting data about all products of selected model
             url=url, cls_link='product-link',
             cls_categories='row no-gutter products-list',
@@ -125,7 +126,7 @@ class MacBook(Search):
 
     def get_products(self, url: str,
                      max_price: int,
-                     desired_memory: int) -> list[dict]:
+                     desired_memory: int) -> List[Dict]:
         cards = self.create_soup(   # collecting data about all products of selected model
             url=url, cls_link='product-link',
             cls_categories='row no-gutter products-list',
@@ -166,7 +167,7 @@ class AirPods(Search):
 
     URL = 'https://repairmyapple.ru/buy/buy-apple/airpods-darom'
 
-    def get_products(self) -> list[dict]:
+    def get_products(self) -> List[Dict]:
         cards = self.create_soup(
             url=AirPods.URL,
             cls_categories='row no-gutter products-list',
@@ -215,7 +216,7 @@ class Apple_Watch(Search):
 
     def get_products(self, url: str,
                      max_price: int,
-                     desired_diagonal: int) -> list[dict]:
+                     desired_diagonal: int) -> List[Dict]:
         cards = self.create_soup(  # collecting data about all products of selected model
             url=url,
             cls_categories='row no-gutter products-list',
