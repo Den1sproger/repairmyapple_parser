@@ -17,19 +17,19 @@ class Search:
     """Basic class with basic functions for site scrapping"""
 
     def create_soup(self, url: str,
-                    class_categories: str,
-                    class_link: str) -> list[str]:
+                    cls_categories: str,
+                    cls_link: str) -> list[str]:
         response = requests.get(url=url, headers=headers)
         soup = BeautifulSoup(response.text, 'lxml')
-        products = soup.find('div', class_=class_categories).find_all('a', class_=class_link)
+        products = soup.find('div', class_=cls_categories).find_all('a', class_=cls_link)
 
         return products
 
 
     def create_models_dict(self, url: str) -> dict:
         cards = self.create_soup(
-            url=url, class_link='product-link 1',
-            class_categories='row no-gutter products-list categories-list'
+            url=url, cls_link='product-link 1',
+            cls_categories='row no-gutter products-list categories-list'
         )
 
         models = {}
@@ -71,8 +71,8 @@ class IPhone(Search):
                     max_price: int,
                     desired_memory: int) -> list[dict]:
         cards = self.create_soup(   # collecting data about all products of selected model
-            url=url, class_link='product-link',
-            class_categories='row no-gutter products-list',
+            url=url, cls_link='product-link',
+            cls_categories='row no-gutter products-list',
         )
 
         products = []
@@ -123,10 +123,12 @@ class MacBook(Search):
         else:
             return int(text.partition(info)[0].strip().split(' ')[-1])
 
-    def get_products(self, url: str, max_price: int, desired_memory: int) -> list:
+    def get_products(self, url: str,
+                     max_price: int,
+                     desired_memory: int) -> list[dict]:
         cards = self.create_soup(   # collecting data about all products of selected model
-            url=url, class_link='product-link',
-            class_categories='row no-gutter products-list',
+            url=url, cls_link='product-link',
+            cls_categories='row no-gutter products-list',
         )
 
         products = []
@@ -167,8 +169,8 @@ class AirPods(Search):
     def get_products(self) -> list[dict]:
         cards = self.create_soup(
             url=AirPods.URL,
-            class_categories='row no-gutter products-list',
-            class_link='product-link'
+            cls_categories='row no-gutter products-list',
+            cls_link='product-link'
         )
         products = []
         for product in cards:
@@ -212,12 +214,12 @@ class Apple_Watch(Search):
         return diag
 
     def get_products(self, url: str,
-                    max_price: int,
-                    desired_diagonal: int) -> list[dict]:
+                     max_price: int,
+                     desired_diagonal: int) -> list[dict]:
         cards = self.create_soup(  # collecting data about all products of selected model
             url=url,
-            class_categories='row no-gutter products-list',
-            class_link='product-link'
+            cls_categories='row no-gutter products-list',
+            cls_link='product-link'
         )
 
         products = []
