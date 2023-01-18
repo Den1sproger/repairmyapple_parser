@@ -280,4 +280,4 @@ async def get_watches(message: types.Message,
 
 
 if __name__ == '__main__':
-    executor.start_polling(dispatcher=ds)
+    st = executor.start_polling(dispatcher=ds)
