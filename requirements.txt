@@ -4,3 +4,4 @@ lxml
 fake-useragent
 PyTelegramBotAPI
 python-dotenv
+gunicorn
