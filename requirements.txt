@@ -1,0 +1,7 @@
+bs4
+lxml
+requests
+fake-useragent
+aiogram
+python-dotenv
+gunicorn
